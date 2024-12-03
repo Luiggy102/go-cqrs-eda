@@ -78,6 +78,42 @@ func (n *NatsEventStore) PublishCreatedFeed(ctx context.Context, feed *models.Fe
 	return nil
 }
 
-// func (n *NatsEventStore) SubscribeCreatedFeed(ctx context.Context) (<-chan CreatedFeedMessage, error) {
-// }
-// func (n *NatsEventStore) OnCreateFeed(ctx context.Context, f func(CreatedFeedMessage)) error {}
+func (n *NatsEventStore) OnCreateFeed(ctx context.Context, f func(CreatedFeedMessage)) error {
+	var err error
+	msg := CreatedFeedMessage{}
+	n.feedCreatedSub, err = n.conn.Subscribe(msg.Type(), func(m *nats.Msg) {
+		err = n.decodeMessage(m.Data, &msg)
+		// call the function with the msg
+		f(msg)
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (n *NatsEventStore) SubscribeCreatedFeed(ctx context.Context) (<-chan CreatedFeedMessage, error) {
+	m := CreatedFeedMessage{}
+	n.feedCreatedChan = make(chan CreatedFeedMessage, 64)
+	ch := make(chan *nats.Msg, 64) // only for msg
+	// chan subscribe
+	var err error
+	n.feedCreatedSub, err = n.conn.ChanSubscribe(m.Type(), ch)
+	if err != nil {
+		return nil, err
+	}
+	// go routine
+	go func() {
+		// wait for a new msg
+		for {
+			select {
+			case msg := <-ch:
+				// decode and send
+				n.decodeMessage(msg.Data, &m)
+				n.feedCreatedChan <- m
+			}
+		}
+
+	}()
+	return (<-chan CreatedFeedMessage)(n.feedCreatedChan), nil
+}
