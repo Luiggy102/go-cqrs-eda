@@ -2,8 +2,10 @@ package events
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 
+	"github.com/Luiggy102/go-cqrs-eda/models"
 	"github.com/nats-io/nats.go"
 )
 
@@ -44,8 +46,38 @@ func (n *NatsEventStore) decodeMessage(data []byte, m interface{}) error {
 }
 
 // satisfy the EventStore interface
-// func (n *NatsEventStore) Close()                                                          {}
-// func (n *NatsEventStore) PublishCreatedFeed(ctx context.Context, feed *models.Feed) error {}
+func (n *NatsEventStore) Close() {
+	// check first for != nil
+	if n.conn != nil {
+		n.conn.Close()
+	}
+	if n.feedCreatedSub != nil {
+		n.feedCreatedSub.Unsubscribe()
+	}
+	close(n.feedCreatedChan)
+}
+
+func (n *NatsEventStore) PublishCreatedFeed(ctx context.Context, feed *models.Feed) error {
+	msg := CreatedFeedMessage{
+		ID:          feed.ID,
+		Title:       feed.Title,
+		Description: feed.Description,
+		CreatedAt:   feed.CreatedAt,
+	}
+	// sent the msg data to the nats Connection (publish)
+	data, err := n.encodeMessage(msg)
+	if err != nil {
+		return err
+	}
+
+	// publish
+	err = n.conn.Publish(msg.Type(), data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // func (n *NatsEventStore) SubscribeCreatedFeed(ctx context.Context) (<-chan CreatedFeedMessage, error) {
 // }
-// func (n *NatsEventStore) OnCreatedFeed(ctx context.Context, f func(CreatedFeedMessage)) error {}
+// func (n *NatsEventStore) OnCreateFeed(ctx context.Context, f func(CreatedFeedMessage)) error {}
