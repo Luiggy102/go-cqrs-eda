@@ -110,6 +110,7 @@ func (n *NatsEventStore) SubscribeCreatedFeed(ctx context.Context) (<-chan Creat
 			case msg := <-ch:
 				// decode and send
 				n.decodeMessage(msg.Data, &m)
+				// send the CreatedFeedMessage to the nats channel
 				n.feedCreatedChan <- m
 			}
 		}
