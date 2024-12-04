@@ -3,6 +3,7 @@ module github.com/Luiggy102/go-cqrs-eda
 go 1.22.7
 
 require (
+	github.com/elastic/go-elasticsearch/v7 v7.17.10 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/nats-io/nats.go v1.37.0 // indirect
