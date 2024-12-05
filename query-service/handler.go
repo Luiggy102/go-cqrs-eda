@@ -40,3 +40,25 @@ func ListFeedsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
+func SearchHandler(w http.ResponseWriter, r *http.Request) {
+	// find the query from the url
+	query := r.URL.Query().Get("q")
+	if len(query) == 0 {
+		http.Error(w, "query is requried", http.StatusBadRequest)
+		return
+	}
+
+	// get the feeds
+	feeds, err := search.SearchFeed(r.Context(), query)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	// send the response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(feeds)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
