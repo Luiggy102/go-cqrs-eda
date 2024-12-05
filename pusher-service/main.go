@@ -43,7 +43,7 @@ func main() {
 	go hub.Run()
 
 	// start the router
-	http.HandleFunc("ws", hub.HandleWebSocket)
+	http.HandleFunc("/ws", hub.HandleWebSocket)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal(err)
