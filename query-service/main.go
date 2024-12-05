@@ -25,7 +25,8 @@ type Config struct {
 
 func newRouter() (router *mux.Router) {
 	router = mux.NewRouter()
-	// router.HandleFunc("/feeds", createFeedHandler).Methods(http.MethodPost)
+	router.HandleFunc("/feeds", ListFeedsHandler).Methods(http.MethodGet)
+	router.HandleFunc("/search", ListFeedsHandler).Methods(http.MethodGet)
 	return
 }
 
